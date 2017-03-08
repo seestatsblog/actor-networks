@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>
+
+.links line {
+  stroke: #999;
+  stroke-opacity: 0.6;
+}
+
+.nodes circle {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+</style>
+
+<script type = "text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+<body>
+  <script type = "text/javascript">
+
+// Set-up width and height of SVG
+var width = 2000,
+    height = 2000;
+
+// Make an SVG container
+var svg = d3.select("body")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+// Colours for the different groups
+var color = d3.scaleOrdinal(d3.schemeCategory20);
+
+// Make an empty force diagram
+var simulation = d3.forceSimulation() // Creates new simulation
+    .force("link", d3.forceLink().id(function(d) { return d.id; })) // Allows you to use names in sources and targets (based on IDs for nodes)
+    .force("charge", d3.forceManyBody()) // Assigns 'charge' to nodes so that each node affects every other node
+    .force("center", d3.forceCenter(width / 2, height / 2)); // Center of the diagram is in the middle of the SVG container
+
+// Load data (with error handling function)
+d3.json("leo.json", function(error, graph) {
+  if (error) throw error; // Generate error messages
+
+  var link = svg.append("g") // Add links
+      .attr("class", "links") // Use style for links
+    .selectAll("line")
+    .data(graph.links) // Bind data
+    .enter().append("line")
+      .attr("stroke-width", function(d) { return Math.sqrt(d.value); }); // Function for link width
+
+  var node = svg.append("g") // Add nodes
+      .attr("class", "nodes") // Use style for nodes
+    .selectAll("circle")
+    .data(graph.nodes) // Bind data
+    .enter().append("circle")
+      .attr("r", 5) // Radius of nodes
+      .attr("fill", function(d) { return color(d.group); }) // Fill with colour according to group
+      .call(d3.drag() // Allows nodes to be dragged
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended));
+
+// Hover text
+  node.append("title")
+      .text(function(d) { return d.id; }); // ID of node
+
+// Add nodes to simulation
+  simulation
+      .nodes(graph.nodes)
+      .on("tick", ticked);
+
+// Add links to simulation
+  simulation.force("link")
+      .links(graph.links);
+
+  function ticked() {
+    link // Make lines between nodes using simulation
+        .attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+
+    node // Position of nodes using simulation
+        .attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; });
+  }
+});
+
+// Dragging functions
+function dragstarted(d) {
+  if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x;
+  d.fy = d.y;
+}
+
+function dragged(d) {
+  d.fx = d3.event.x;
+  d.fy = d3.event.y;
+}
+
+function dragended(d) {
+  if (!d3.event.active) simulation.alphaTarget(0);
+  d.fx = null;
+  d.fy = null;
+}
+</script>
+</body>
+</html>
