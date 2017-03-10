@@ -19,8 +19,8 @@
   <script type = "text/javascript">
 
 // Set-up width and height of SVG
-var width = 1000,
-    height = 750;
+var width = 960,
+    height = 500;
 
 // Make an SVG container
 var svg = d3.select("body")
@@ -33,8 +33,8 @@ var color = d3.scaleOrdinal(d3.schemeCategory20);
 
 // Make an empty force diagram
 var simulation = d3.forceSimulation() // Creates new simulation
-    .force("link", d3.forceLink().id(function(d) { return d.id; })) // Allows you to use names in sources and targets (based on IDs for nodes)
-    .force("charge", d3.forceManyBody().distanceMax(100)) // Assigns 'charge' to nodes so that each node affects every other node
+    .force("link", d3.forceLink().id(function(d) { return d.id; }).distance(100)) // Allows you to use names in sources and targets (based on IDs for nodes)
+    .force("charge", d3.forceManyBody()) // Assigns 'charge' to nodes so that each node affects every other node
     .force("center", d3.forceCenter(width / 2, height / 2)); // Center of the diagram is in the middle of the SVG container
 
 // Load data (with error handling function)
@@ -53,7 +53,7 @@ d3.json("leo.json", function(error, graph) {
     .selectAll("circle")
     .data(graph.nodes) // Bind data
     .enter().append("circle")
-      .attr("r", 3) // Radius of nodes
+      .attr("r", function(d) { return 3*Math.sqrt(d.size); }) // Radius of nodes
       .attr("fill", function(d) { return color(d.group); }) // Fill with colour according to group
       .call(d3.drag() // Allows nodes to be dragged
           .on("start", dragstarted)
